@@ -5,7 +5,7 @@
 
 unbindall
 
-bind esc quit
+bind joy8 quit
 bind up +up
 bind down +down
 bind left +left
@@ -40,7 +40,8 @@ set dmg_wndp 0x78f0f0 0x58b8b8 0x487878 0x184848
 set dmg_obp0 0x78f0f0 0x58b8b8 0x487878 0x184848
 set dmg_obp1 0x78f0f0 0x58b8b8 0x487878 0x184848
 
-set vmode 854 480 16
-set scale 2
+
+set scale 3
 set density 2
 set fullscreen 1
+

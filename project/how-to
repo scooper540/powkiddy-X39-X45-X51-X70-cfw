@@ -9,12 +9,61 @@ export RANLIB=arm-buildroot-linux-uclibcgnueabi-ranlib
 export STRIP=arm-buildroot-linux-uclibcgnueabi-strip
 export PATH=~/powkiddy/buildroot-2015.02/output/host/usr/bin:$PATH
 
-to run in adb shell 
+To connect to the console, you must have the USB-C (charger) connected and USB-A cable ton USB1 port.
+Switch ON the console (press 3s the poweron button) until you see on the display an image with computer and console! if you are on ADB shell on charging screen, the framebuffer and the buttons are not working correctly!
 
+mount the sdcard : mount /dev/mmcblk0p1 /mnt/card/
+
+to run in adb shell:
 /etc/backlight.sh open
 export HOME=/mnt/card/
 export SDL_VIDEODRIVER=fbcon
 export SDL_NOMOUSE=1
 export SDL_MOUSEDEV=/dev/null
 export SDL_VIDEO_FBCON_ROTATION=CCW
+echo "0,0" > /sys/class/graphics/fb0/pan
+
+
+sdl1.2:
+SDL1.2 has been modified to match the framebuffer resolution of the X39 pro (854x480) in src/video/fbcon/SDL_fbvideo.c
+
+configure : see _compile in SDL folder :  ./configure \
+    --host=arm-buildroot-linux-uclibcgnueabi \
+    --prefix=$SYSROOT/usr \
+    --disable-video-opengl \
+    --disable-video-x11 \
+    --disable-video-wayland \
+    --enable-video-fbcon \
+    --disable-haptic \
+    --disable-joystick-hidapi \
+    --enable-joystick \
+    --enable-audio \
+    --disable-tests \
+    CC=$CC \
+    CXX=$CXX \
+    AR=$AR \
+    LD=$LD \
+    RANLIB=$RANLIB \
+    STRIP=$STRIP \
+    CFLAGS="--sysroot=$SYSROOT" \
+    LDFLAGS="--sysroot=$SYSROOT"
+then make and make install
+
+gnuboy:
+configure : see _configure in gnuboy folder :  ./configure  --host=arm-buildroot-linux-uclibcgnueabi     --prefix=/tmp/gnuboy-install     --with-sdl     --without-sdl2 --with-sound=no --with-fb --without-x --disable-sdltest
+then make
+
+copy from etc/powkiddy.rc config file
+adb push etc/powkiddy.rc /mnt/card/gnuboy.rc
+
+push the binary
+adb push sdlgnuboy /mnt/card
+
+and SDL1.2
+adb push sysroot/usr/lib/libSDL-1.2.so.0 /mnt/card
+
+copy a rom on /mnt/card
+run the exports listed above then ./sdlgnuboy& and it should work :-)
+ps: i've added a lot of logs for troubleshooting and it require you to press a button to start really the emulator...
+
 
