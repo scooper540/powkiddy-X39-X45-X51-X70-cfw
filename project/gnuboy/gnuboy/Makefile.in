@@ -1,0 +1,80 @@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+
+CC = @CC@
+LD = $(CC)
+AS = $(CC)
+INSTALL = @INSTALL@
+
+CFLAGS = @CFLAGS@
+CPPFLAGS = @CPPFLAGS@
+LDFLAGS = $(CFLAGS) @LDFLAGS@ @LIBS@
+ASFLAGS = $(CFLAGS)
+
+TARGETS = @TARGETS@
+
+ASM_OBJS = @ASM_OBJS@
+
+SYS_DEFS = @DEFS@ @ENDIAN@ @ASM@ @SYS_DEFS@
+SYS_OBJS = @SYS_OBJS@ $(ASM_OBJS)
+SYS_INCS = @XINCS@ -I./sys/nix
+
+FB_OBJS = @FB_OBJS@ @JOY@ @SOUND@
+FB_LIBS = 
+
+SVGA_OBJS = sys/svga/svgalib.o sys/pc/keymap.o @JOY@ @SOUND@
+SVGA_LIBS = -L/usr/local/lib -lvga
+
+SDL_OBJS = sys/sdl/sdl.o sys/sdl/sdl-audio.o sys/sdl/keymap.o sys/sdl/sdl-joystick.o
+SDL_LIBS = @SDL_LIBS@
+SDL_CFLAGS = @SDL_CFLAGS@
+
+SDL2_OBJS = sys/sdl2/sdl2.o sys/sdl2/sdl-audio.o sys/sdl2/keymap.o sys/sdl2/sdl-joystick.o
+SDL2_LIBS = @SDL2_LIBS@
+
+X11_OBJS = sys/x11/xlib.o sys/x11/keymap.o @JOY@ @SOUND@
+X11_LIBS = @XLIBS@ -lX11 -lXext
+
+all: $(TARGETS)
+
+include Rules
+
+fbgnuboy: $(OBJS) $(SYS_OBJS) $(FB_OBJS)
+	$(LD) $(OBJS) $(SYS_OBJS) $(FB_OBJS) -o $@ $(FB_LIBS) $(LDFLAGS)
+
+sgnuboy: $(OBJS) $(SYS_OBJS) $(SVGA_OBJS)
+	$(LD) $(OBJS) $(SYS_OBJS) $(SVGA_OBJS) -o $@ $(SVGA_LIBS) $(LDFLAGS)
+
+sdlgnuboy: $(OBJS) $(SYS_OBJS) $(SDL_OBJS)
+	$(LD) $(OBJS) $(SYS_OBJS) $(SDL_OBJS) -o $@ $(SDL_LIBS) $(LDFLAGS)
+
+sdl2gnuboy: $(OBJS) $(SYS_OBJS) $(SDL2_OBJS)
+	$(LD) $(OBJS) $(SYS_OBJS) $(SDL2_OBJS) -o $@ $(SDL2_LIBS) $(LDFLAGS)
+
+sys/sdl/sdl.o: sys/sdl/sdl.c
+	$(MYCC) $(SDL_CFLAGS) -c $< -o $@
+
+sys/sdl/keymap.o: sys/sdl/keymap.c
+	$(MYCC) $(SDL_CFLAGS) -c $< -o $@
+
+xgnuboy: $(OBJS) $(SYS_OBJS) $(X11_OBJS)
+	$(LD) $(OBJS) $(SYS_OBJS) $(X11_OBJS) -o $@ $(X11_LIBS) $(LDFLAGS)
+
+joytest: joytest.o @JOY@
+	$(LD) $^ -o $@ $(LDFLAGS)
+
+install: all
+	$(INSTALL) -d $(bindir)
+	$(INSTALL) -m 755 $(TARGETS) $(bindir)
+
+clean:
+	rm -f *gnuboy gmon.out *.o sys/*.o sys/*/*.o asm/*/*.o $(OBJS)
+
+distclean: clean
+	rm -f config.* sys/nix/config.h Makefile
+
+
+
+

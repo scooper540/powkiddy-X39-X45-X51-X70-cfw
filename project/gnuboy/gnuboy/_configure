@@ -1,0 +1,1 @@
+ ./configure  --host=arm-buildroot-linux-uclibcgnueabi     --prefix=/tmp/gnuboy-install     --with-sdl     --without-sdl2 --with-sound=no --with-fb --without-x --disable-sdltest
