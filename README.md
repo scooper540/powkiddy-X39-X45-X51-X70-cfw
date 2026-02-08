@@ -1,9 +1,10 @@
 
 ## Powkiddy x39pro/x45/x51/x70 toolchain to compile custom binaries
 
-**What is working**
-joysticks and buttons
-framebuffer
+**What is working:**
+
+- joysticks and buttons
+- framebuffer
 
 **no audio at this moment**
 
