@@ -1,0 +1,20 @@
+to compile:
+
+export SYSROOT=~/powkiddy/sysroot
+export CC=arm-gcc
+export CXX=arm-buildroot-linux-uclibcgnueabi-g++
+export AR=arm-buildroot-linux-uclibcgnueabi-ar
+export LD=arm-buildroot-linux-uclibcgnueabi-ld
+export RANLIB=arm-buildroot-linux-uclibcgnueabi-ranlib
+export STRIP=arm-buildroot-linux-uclibcgnueabi-strip
+export PATH=~/powkiddy/buildroot-2015.02/output/host/usr/bin:$PATH
+
+to run in adb shell 
+
+/etc/backlight.sh open
+export HOME=/mnt/card/
+export SDL_VIDEODRIVER=fbcon
+export SDL_NOMOUSE=1
+export SDL_MOUSEDEV=/dev/null
+export SDL_VIDEO_FBCON_ROTATION=CCW
+

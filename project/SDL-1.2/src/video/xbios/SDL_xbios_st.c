@@ -1,0 +1,196 @@
+/*
+    SDL - Simple DirectMedia Layer
+    Copyright (C) 1997-2012 Sam Lantinga
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Library General Public
+    License as published by the Free Software Foundation; either
+    version 2 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Library General Public License for more details.
+
+    You should have received a copy of the GNU Library General Public
+    License along with this library; if not, write to the Free
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+    Sam Lantinga
+    slouken@libsdl.org
+*/
+#include "SDL_config.h"
+
+/*
+	ST/STE Xbios video functions
+
+	Patrice Mandin
+*/
+
+#include <mint/cookie.h>
+#include <mint/osbind.h>
+
+#include "../SDL_sysvideo.h"
+
+#include "../ataricommon/SDL_atarimxalloc_c.h"
+#include "../ataricommon/SDL_ataric2p_s.h"
+#include "SDL_xbios.h"
+
+static const xbiosmode_t stmodes[]={
+	{ST_LOW>>8,320,200,4,XBIOSMODE_C2P}
+};
+
+static void listModes(_THIS, int actually_add);
+static void saveMode(_THIS, SDL_PixelFormat *vformat);
+static void setMode_ST(_THIS, const xbiosmode_t *new_video_mode);
+static void setMode_STE(_THIS, const xbiosmode_t *new_video_mode);
+static void restoreMode(_THIS);
+static void vsync_ST(_THIS);
+static void getScreenFormat(_THIS, int bpp, Uint32 *rmask, Uint32 *gmask, Uint32 *bmask, Uint32 *amask);
+static int getLineWidth(_THIS, const xbiosmode_t *new_video_mode, int width, int bpp);
+static void swapVbuffers(_THIS);
+static int allocVbuffers(_THIS, const xbiosmode_t *new_video_mode, int num_buffers, int bufsize);
+static void freeVbuffers(_THIS);
+static int setColors(_THIS, int firstcolor, int ncolors, SDL_Color *colors);
+
+void SDL_XBIOS_VideoInit_ST(_THIS, unsigned long cookie_cvdo)
+{
+	XBIOS_listModes = listModes;
+	XBIOS_saveMode = saveMode;
+	XBIOS_setMode = setMode_ST;
+	XBIOS_restoreMode = restoreMode;
+	XBIOS_vsync = vsync_ST;
+	XBIOS_getScreenFormat = getScreenFormat;
+	XBIOS_getLineWidth = getLineWidth;
+	XBIOS_swapVbuffers = swapVbuffers;
+	XBIOS_allocVbuffers = allocVbuffers;
+	XBIOS_freeVbuffers = freeVbuffers;
+
+	this->SetColors = setColors;
+
+	if ((cookie_cvdo>>16) == VDO_STE) {
+		XBIOS_setMode = setMode_STE;
+	}
+}
+
+static void listModes(_THIS, int actually_add)
+{
+	SDL_XBIOS_AddMode(this, actually_add, &stmodes[0]);
+}
+
+static void saveMode(_THIS, SDL_PixelFormat *vformat)
+{
+	XBIOS_oldvbase=Physbase();
+	XBIOS_oldvmode=Getrez();
+}
+
+static void setMode_ST(_THIS, const xbiosmode_t *new_video_mode)
+{
+	int i;
+
+	Setscreen(-1,XBIOS_screens[0],-1);
+
+	Setscreen(-1,-1,new_video_mode->number);
+
+	/* Reset palette, 8 shades of gray with a bit of green interleaved */
+	for (i=0;i<16;i++) {
+		TT_palette[i]= ((i>>1)<<8) | (((i*8)/17)<<4) | (i>>1);
+	}
+	Setpalette(TT_palette);
+}
+
+static void setMode_STE(_THIS, const xbiosmode_t *new_video_mode)
+{
+	int i;
+
+	Setscreen(-1,XBIOS_screens[0],-1);
+
+	Setscreen(-1,-1,new_video_mode->number);
+
+	/* Reset palette, 16 shades of gray */
+	for (i=0;i<16;i++) {
+		int c;
+
+		c=((i&1)<<3)|((i>>1)&7);
+		TT_palette[i]=(c<<8)|(c<<4)|c;
+	}
+	Setpalette(TT_palette);
+}
+
+static void restoreMode(_THIS)
+{
+	Setscreen(-1,XBIOS_oldvbase,XBIOS_oldvmode);
+}
+
+static void vsync_ST(_THIS)
+{
+	Vsync();
+}
+
+static void getScreenFormat(_THIS, int bpp, Uint32 *rmask, Uint32 *gmask, Uint32 *bmask, Uint32 *amask)
+{
+	*rmask = *gmask = *bmask = *amask = 0;
+}
+
+static int getLineWidth(_THIS, const xbiosmode_t *new_video_mode, int width, int bpp)
+{
+	if (bpp==4) {
+		return (width >> 1);
+	}
+
+	return (width * (((bpp==15) ? 16 : bpp)>>3));
+}
+
+static void swapVbuffers(_THIS)
+{
+	Setscreen(-1,XBIOS_screens[XBIOS_fbnum],-1);
+}
+
+static int allocVbuffers(_THIS, const xbiosmode_t *new_video_mode, int num_buffers, int bufsize)
+{
+	int i;
+
+	for (i=0; i<num_buffers; i++) {
+		XBIOS_screensmem[i] = Atari_SysMalloc(bufsize, MX_STRAM);
+
+		if (XBIOS_screensmem[i]==NULL) {
+			SDL_SetError("Can not allocate %d KB for buffer %d", bufsize>>10, i);
+			return (0);
+		}
+		SDL_memset(XBIOS_screensmem[i], 0, bufsize);
+
+		XBIOS_screens[i]=(void *) (( (long) XBIOS_screensmem[i]+255) & 0xFFFFFF00UL);
+	}
+
+	return (1);
+}
+
+static void freeVbuffers(_THIS)
+{
+	int i;
+
+	for (i=0;i<2;i++) {
+		if (XBIOS_screensmem[i]) {
+			Mfree(XBIOS_screensmem[i]);
+			XBIOS_screensmem[i]=NULL;
+		}
+		XBIOS_screens[i]=NULL;
+	}
+}
+
+static int setColors(_THIS, int firstcolor, int ncolors, SDL_Color *colors)
+{
+	extern Uint8 SDL_Atari_C2pPalette4[256];
+	int	i, r,g,b;
+
+	for (i = 0; i < ncolors; i++) {
+		r = colors[i].r;
+		g = colors[i].g;
+		b = colors[i].b;
+
+		/* This produces values from 0 to 15 */
+		SDL_Atari_C2pPalette4[firstcolor+i] = ((r * 30) + (g * 59) + (b * 11)) / (100 * 16);
+	}
+
+	return(1);
+}

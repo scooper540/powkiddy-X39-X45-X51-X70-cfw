@@ -1,0 +1,20 @@
+./configure \
+    --host=arm-buildroot-linux-uclibcgnueabi \
+    --prefix=$SYSROOT/usr \
+    --disable-video-opengl \
+    --disable-video-x11 \
+    --disable-video-wayland \
+    --enable-video-fbcon \
+    --disable-haptic \
+    --disable-joystick-hidapi \
+    --enable-joystick \
+    --enable-audio \
+    --disable-tests \
+    CC=$CC \
+    CXX=$CXX \
+    AR=$AR \
+    LD=$LD \
+    RANLIB=$RANLIB \
+    STRIP=$STRIP \
+    CFLAGS="--sysroot=$SYSROOT" \
+    LDFLAGS="--sysroot=$SYSROOT"
