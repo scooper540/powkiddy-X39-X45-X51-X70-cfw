@@ -1,0 +1,220 @@
+#!/bin/sh
+
+STAGE=$1
+KO_PATH=/lib/modules/3.10.0
+
+init_gpu() {
+	insmod $KO_PATH/pvrsrvkm.ko
+	if [ -f $KO_PATH/dc_owlfb.ko ]; then
+		insmdo $KO_PATH/dc_owlfb.ko
+	fi
+
+	pvrsrvctl --start --no-module
+}
+
+mount_diska(){
+    if [ -b /dev/nand0 ]; then
+        disk=nand0
+        part="p"
+    else
+        disk=mtdblockc
+        part=""
+    fi
+	parts_num=`cat /sys/block/$disk/uevent | grep NPARTS | awk -F '=' '{print $2}'`
+	parts_cnt=1
+	part_name="MEDIA"
+	while [ ! $parts_cnt = $parts_num ];do
+		varlib_part=`cat /sys/block/$disk/$disk$part$parts_cnt/uevent | grep $part_name`
+		if [ x$varlib_part = x"PARTNAME=$part_name" ]; then
+			echo "found $part_name partition number is $parts_cnt"
+			mkdir -p /mnt/diska
+			mount -t vfat -o noatime -o rw -o iocharset=utf8 /dev/$disk$part$parts_cnt /mnt/diska
+			if [ ! $? = 0 ]; then
+				echo "mount media fail,retry to mount again!!!"
+				mkfs.vfat /dev/$disk$part$parts_cnt
+				mount -t vfat -o noatime  -o rw -o iocharset=utf8 /dev/$disk$part$parts_cnt /mnt/diska
+			else
+			      echo "mount media over,run dosfsck"
+				dosfsck -yf /dev/$disk$part$parts_cnt
+			fi
+			break
+		fi
+		parts_cnt=`expr $parts_cnt + 1`
+	done
+}
+
+mount_udisk(){
+    if [ -b /dev/nand0 ]; then
+        disk=nand0
+        part="p"
+    else
+        disk=mtdblockc
+        part=""
+    fi
+	parts_num=`cat /sys/block/$disk/uevent | grep NPARTS | awk -F '=' '{print $2}'`
+	parts_cnt=1
+	part_name="UDISK"
+	while [ ! $parts_cnt = $parts_num ];do
+		varlib_part=`cat /sys/block/$disk/$disk$part$parts_cnt/uevent | grep $part_name`
+		if [ x$varlib_part = x"PARTNAME=$part_name" ]; then
+			echo "found $part_name partition number is $parts_cnt"
+			mkdir -p /mnt/udisk
+			mount -t vfat -o noatime -o rw -o iocharset=utf8 /dev/$disk$part$parts_cnt /mnt/udisk
+			if [ ! $? = 0 ]; then
+				echo "mount fat fail,try to format it"
+				mkfs.vfat /dev/$disk$part$parts_cnt
+				mount -t vfat -o noatime -o rw -o iocharset=utf8 /dev/$disk$part$parts_cnt /mnt/udisk
+			else
+			      echo "mount udisk over,run dosfsck"
+				dosfsck -yf /dev/$disk$part$parts_cnt
+			fi
+			break
+		fi
+		parts_cnt=`expr $parts_cnt + 1`
+	done
+}
+
+mount_varlib(){
+    if [ -b /dev/nand0 ]; then
+        disk=nand0
+        part="p"
+    else
+        disk=mtdblockc
+        part=""
+    fi
+	parts_num=`cat /sys/block/$disk/uevent | grep NPARTS | awk -F '=' '{print $2}'`
+	parts_cnt=1
+	part_name="UPGRADE"
+	while [ ! $parts_cnt = $parts_num ];do
+		varlib_part=`cat /sys/block/$disk/$disk$part$parts_cnt/uevent | grep $part_name`
+		if [ x$varlib_part = x"PARTNAME=$part_name" ]; then
+			echo "found $part_name partition number is $parts_cnt"
+			mkdir -p /var/upgrade
+			mount -t vfat -o noatime -o iocharset=utf8 /dev/$disk$part$parts_cnt /var/upgrade
+			if [ ! $? = 0 ]; then
+				echo "mount fat fail"
+				mkfs.vfat /dev/$disk$part$parts_cnt
+				mount -t vfat -o noatime -o iocharset=utf8 /dev/$disk$part$parts_cnt /var/upgrade
+			else
+				dosfsck -yf /dev/$disk$part$parts_cnt
+			fi
+			mkdir -p /var/upgrade/download
+			break
+		fi
+		parts_cnt=`expr $parts_cnt + 1`
+	done
+	export LD_LIBRARY_PATH=/var/upgrade:$LD_LIBRARY_PATH
+	export PATH=/var/upgrade:$PATH
+}
+
+mount_res(){
+    if [ -b /dev/nand0 ]; then
+        disk=nand0
+        part="p"
+    else
+        disk=mtdblockc
+        part=""
+    fi
+	parts_num=`cat /sys/block/$disk/uevent | grep NPARTS | awk -F '=' '{print $2}'`
+	parts_cnt=1
+	part_name="RES"
+	while [ ! $parts_cnt = $parts_num ];do
+		varlib_part=`cat /sys/block/$disk/$disk$part$parts_cnt/uevent | grep $part_name`
+		if [ x$varlib_part = x"PARTNAME=$part_name" ]; then
+			echo "mount res ,found $part_name partition number is $parts_cnt"
+			mkdir -p /usr/local
+			mount -o loop -t squashfs /dev/$disk$part$parts_cnt /usr/local
+			if [ ! $? = 0 ]; then
+				echo "mount squashfs res.img fail!!!"
+				#mkfs.vfat /dev/$disk$part$parts_cnt
+				#mount -o loop -t squashfs /dev/$disk$part$parts_cnt /usr/local
+			else
+				echo "mount res over"
+				#dosfsck -yf /dev/$disk$part$parts_cnt
+			fi
+			break
+		fi
+		parts_cnt=`expr $parts_cnt + 1`
+	done
+	#echo "mount res ,found $part_name partition number is $parts_cnt"
+	#mkdir -p /usr/local
+	#mount -o loop -t squashfs /dev/nand0p7 /usr/local
+	#ls -al /dev/nand*
+	#echo "ls res file....debug......"
+	#ls -al /usr/local
+	#echo "mount res over nand0p7,found $part_name partition number is $parts_cnt"
+	
+}
+run_rcs(){
+    echo "run rcS"
+    insmod /lib/modules/atm7051_board.ko
+    mount -t proc proc /proc
+    mount -t devtmpfs devtmpfs /dev
+    mount -t sysfs sysfs /sys
+    mount -t tmpfs tmpfs /tmp
+    mount -t tmpfs tmpfs /var
+    mount -t debugfs none /sys/kernel/debug
+    mkdir -p /dev/shm /dev/pts /tmp/net /var/run
+    mount -t tmpfs tmpfs /dev/shm
+    mount -t devpts devpts /dev/pts
+    echo 4 > /proc/sys/kernel/printk
+    echo 1 > /proc/sys/vm/overcommit_memory
+    cp /etc/wpa_supplicant.conf /tmp/wpa.cfg
+    ulimit -s 1024
+    #export LD_LIBRARY_PATH=/mnt/external/3605d/luaclib:/mnt/external/3605d/opencv:$LD_LIBRARY_PATH
+
+    #usb.sh ADD_FUNCTIONS mass_adb
+    mount_varlib
+    mount_res
+	#mount_diska
+	mount_udisk
+    init_gpu
+    upgtool -o
+
+    if [ -f /var/upgrade/dumplog_mode_all ]; then
+ 			echo "print out to /mnt/udisk/messages.log"
+       manager &>/dev/ttyprintk &
+        klogd
+        syslogd -O /mnt/udisk/messages.log
+    elif [ -f /var/upgrade/dumplog_mode_app ]; then
+ 			echo "print out to /dev/ttyprintk"
+			manager &>/dev/ttyprintk &
+	
+    else
+		if [ -f /var/upgrade/test.sh ]; then
+			echo "run /var/upgrade/test.sh"
+            /var/upgrade/test.sh
+		elif [ -f /mnt/udisk/test.sh ]; then
+			echo "run /mnt/udisk/test.sh"
+            /mnt/udisk/test.sh
+		else
+			echo "run nomal mode"
+			manager &
+        fi 
+    fi
+    #/etc/test.sh &
+}
+
+preload_kmodule(){
+    insmod $KO_PATH/owl_gpio_matrix_adcjoystick.ko tiny_mode=1
+#    echo "do nothing"
+}
+
+load_other_kmodule(){
+#    insmod $KO_PATH/owl_gpio_matrix_adcjoystick.ko
+#    insmod $KO_PATH/ctp_gslX680.ko    #tp驱动改为manager中代码加载
+#    insmod $KO_PATH/xpad.ko
+    #insmod $KO_PATH/wlan_8189fs.ko
+    #insmod $KO_PATH/8723as.ko
+    #insmod $KO_PATH/sp2529.ko
+    #insmod $KO_PATH/owl_legacy_si.ko
+	echo "do nothing"
+}
+
+if [ "$STAGE" = "preload_kmodule" ]; then
+    preload_kmodule
+elif [ "$STAGE" = "load_other_kmodule" ]; then
+    load_other_kmodule
+else
+    run_rcs
+fi

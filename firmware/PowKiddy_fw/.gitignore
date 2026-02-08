@@ -1,0 +1,17 @@
+# Windows trash
+Thumbs.db
+desktop.ini
+
+# Python stuff
+__pycache__/
+*.py[cod]
+*$py.class
+env/
+venv/
+.env
+.venv
+
+# Other
+*_DATA/
+/tmp/
+

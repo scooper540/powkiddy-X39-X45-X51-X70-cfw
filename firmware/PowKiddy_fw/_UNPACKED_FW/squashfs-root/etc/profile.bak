@@ -1,0 +1,13 @@
+# /etc/profile: profile file for ash shell
+
+echo "Processing /etc/profile..."
+# export LD_LIBRARY_PATH=/tmp:/mnt/udisk:/mnt/card:/var/upgrade:/lib:/usr/lib::/usr/lib/luaclib:/usr/local/lib:$LD_LIBRARY_PATH
+# export LD_PRELOAD=/usr/lib/libapconfig.so:/usr/lib/libalc.so:/usr/lib/libaudio_service_api.so:/usr/lib/libmusic_player_api.so:usr/lib/libcutils.so:/usr/lib/libsnap_camera.so
+export LD_LIBRARY_PATH=/tmp:/mnt/udisk:/mnt/card:/var/upgrade:/lib:/usr/lib:/usr/local/lib:$LD_LIBRARY_PATH
+export PATH=/tmp:/mnt/udisk:/mnt/card:/var/upgrade:$PATH
+ulimit -s 1024
+ulimit -c unlimited
+echo 1 > /proc/sys/kernel/core_uses_pid
+
+echo "Processing /etc/profile Done"
+
