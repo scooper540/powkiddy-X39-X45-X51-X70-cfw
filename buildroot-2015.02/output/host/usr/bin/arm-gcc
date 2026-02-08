@@ -1,0 +1,6 @@
+#!/bin/sh
+exec arm-buildroot-linux-uclibcgnueabi-gcc \
+  --sysroot=/home/chris/powkiddy/sysroot \
+  -I/home/chris/powkiddy/sysroot/usr/include \
+  -L/home/chris/powkiddy/sysroot/usr/lib \
+  "$@"

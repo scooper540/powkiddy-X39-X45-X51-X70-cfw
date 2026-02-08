@@ -1,0 +1,7 @@
+/* Generated automatically. */
+static const char configuration_arguments[] = "./configure --prefix=/home/chris/powkiddy/buildroot-2015.02/output/host/usr --sysconfdir=/home/chris/powkiddy/buildroot-2015.02/output/host/etc --enable-static --target=arm-buildroot-linux-uclibcgnueabi --with-sysroot=/home/chris/powkiddy/buildroot-2015.02/output/host/usr/arm-buildroot-linux-uclibcgnueabi/sysroot --disable-__cxa_atexit --with-gnu-ld --disable-libssp --disable-multilib --with-gmp=/home/chris/powkiddy/buildroot-2015.02/output/host/usr --with-mpfr=/home/chris/powkiddy/buildroot-2015.02/output/host/usr --enable-target-optspace --disable-libsanitizer --enable-tls --disable-libmudflap --enable-threads --with-mpc=/home/chris/powkiddy/buildroot-2015.02/output/host/usr --without-isl --without-cloog --with-float=soft --disable-decimal-float --with-abi=aapcs-linux --with-cpu=cortex-a9 --with-float=soft --with-mode=arm --with-pkgversion='Buildroot 2015.02' --with-bugurl=http://bugs.buildroot.net/ --enable-languages=c,c++ --disable-largefile --enable-poison-system-directories --with-build-time-tools=/home/chris/powkiddy/buildroot-2015.02/output/host/usr/arm-buildroot-linux-uclibcgnueabi/bin --enable-shared --disable-libgomp";
+static const char thread_model[] = "posix";
+
+static const struct {
+  const char *name, *value;
+} configure_default_options[] = { { "abi", "aapcs-linux" }, { "cpu", "cortex-a9" }, { "float", "soft" }, { "mode", "arm" }, { "tls", "gnu" } };
