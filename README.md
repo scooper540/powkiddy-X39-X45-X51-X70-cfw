@@ -5,7 +5,7 @@
  - Install ubuntu 16.04 64 bits
  - Get this repository
    -     I've pushed the buildroot output folder, I hope it can work on other VM ..., if not you have to : make toolchain
-  - In order to compile something with the toolchain, apply the environments variables defined in project/how-to
+  - In order to compile something with the toolchain, apply the environments variables defined in [project/how-to](https://github.com/scooper540/powkiddy-X39-X45-X51-X70-cfw/blob/main/project/how-to)
    - SDL1-2 has been modified to be able to use the framebuffer with correct resolution
    - push the binary to the console
    - apply the export on the consoles
