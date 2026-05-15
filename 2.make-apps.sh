@@ -60,6 +60,11 @@ $CC -o power_volume_handler power_volume_handler.c
 cp power_volume_handler "$(pwd)/../../output/usr/bin"
 cd ..
 
+cd display_image
+$CC -o display_image display_image.c
+cp display_image "$(pwd)/../../output/usr/bin"
+cd ..
+
 cd watchdog_feeder
 $CC -o watchdog_feeder watchdog_feeder.c
 cp watchdog_feeder "$(pwd)/../../output/usr/bin"

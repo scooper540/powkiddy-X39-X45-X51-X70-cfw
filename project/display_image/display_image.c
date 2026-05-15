@@ -138,48 +138,17 @@ void main(int argc, char* argv[])
 
     fclose(f);
 
-    int rotate = (vinfo.yres > vinfo.xres);
-
     for (int y = 0; y < dst_h; y++)
     {
         for (int x = 0; x < dst_w; x++)
         {
             int sx, sy;
 
-            if (rotate)
-            {
-                /*
-                * Rotation 90° clockwise
-                */
+            sx = x * src_w / dst_w;
+            sy = y * src_h / dst_h;
 
-                sx = y * src_w / dst_h;
-                /*sy = (src_h - 1) -
-                    (x * src_h / dst_w);*/
-                sy = x * src_h / dst_w;            
-            }
-            else
-            {
-                /*
-                * Normal scaling
-                */
-
-                sx = x * src_w / dst_w;
-                sy = y * src_h / dst_h;
-            }
-            
             uint8_t *p;
-            if (rotate)
-            {
-                p = bmp_data +
-                    sy * bmp_stride +
-                    sx * 3;
-            }
-            else
-            {
-                p = bmp_data +
-                    (src_h - 1 - sy) * bmp_stride +
-                    sx * 3;
-            }
+            p = bmp_data + (src_h - 1 - sy) * bmp_stride + sx * 3;
 
             uint8_t b = p[0];
             uint8_t g = p[1];
@@ -189,11 +158,6 @@ void main(int argc, char* argv[])
 
             int dx = x;
             int dy = y;
-            if (rotate)
-            {
-                dx = dst_w - 1 - x;
-                dy = dst_h - 1 - y;
-            }
 
             long location =
                 dy * finfo.line_length +
