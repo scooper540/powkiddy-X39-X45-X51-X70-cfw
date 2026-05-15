@@ -15,8 +15,12 @@ TARGET_OPT_FLAGS="-O2 -pipe -ffast-math -funsafe-math-optimizations -fomit-frame
 rm -rf zlib-1.2.8
 tar xvf zlib-1.2.8.tar.xz
 cd zlib-1.2.8
+# zlib 1.2.8 unsets _FILE_OFFSET_BITS when _LARGEFILE64_SOURCE is defined.
+# Newer glibc rejects _TIME_BITS=64 unless _FILE_OFFSET_BITS=64 remains set.
+sed -i 's/#  ifdef _FILE_OFFSET_BITS/#  if defined(_FILE_OFFSET_BITS) \&\& _FILE_OFFSET_BITS != 64/' gzguts.h
 CHOST=arm-linux-gnueabihf \
-CFLAGS="${TARGET_OPT_FLAGS} ${TARGET_ARCH_FLAGS} --sysroot=${SYSROOT} -I${SYSROOT}/usr/include" \
+CPPFLAGS="${TARGET_OPT_FLAGS} ${TARGET_ARCH_FLAGS} --sysroot=${SYSROOT} -I${SYSROOT}/usr/include -D_FILE_OFFSET_BITS=64" \
+CFLAGS="${TARGET_OPT_FLAGS} ${TARGET_ARCH_FLAGS} --sysroot=${SYSROOT} -I${SYSROOT}/usr/include -D_FILE_OFFSET_BITS=64" \
 LDFLAGS="${TARGET_ARCH_FLAGS} --sysroot=${SYSROOT} -L${SYSROOT} -L${SYSROOT}/lib -L${SYSROOT}/usr/lib -L${SYSROOT}/usr/local/lib" \
 ./configure --prefix=/usr
 make -j$NUM_THREAD

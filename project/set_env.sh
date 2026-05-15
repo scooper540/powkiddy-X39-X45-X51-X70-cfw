@@ -24,7 +24,7 @@ export TARGET_FLOAT_ABI="${TARGET_FLOAT_ABI:-hard}"
 export TARGET_ARCH_FLAGS="-mcpu=$TARGET_CPU -mtune=$TARGET_CPU -mfpu=$TARGET_FPU -mfloat-abi=$TARGET_FLOAT_ABI -marm"
 export TARGET_OPT_FLAGS="-O3 -pipe -ffast-math -funsafe-math-optimizations -fomit-frame-pointer"
 
-export CPP_FLAGS="$TARGET_OPT_FLAGS $TARGET_ARCH_FLAGS --sysroot=$SYSROOT -I$SYSROOT/usr/include"
+export CPP_FLAGS="$TARGET_OPT_FLAGS $TARGET_ARCH_FLAGS --sysroot=$SYSROOT -I$SYSROOT/usr/include -D_FILE_OFFSET_BITS=64"
 
 export LD_FLAGS="--sysroot=$SYSROOT -L$SYSROOT -L$SYSROOT/lib -L$SYSROOT/usr/lib -L$SYSROOT/usr/local/lib -L$SYSROOT/usr/include/sound"
 
