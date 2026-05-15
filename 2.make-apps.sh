@@ -19,6 +19,11 @@ cp gfx/video_filters/*.filt "$(pwd)/../../output-sd/cfw/retroarch/filters/video/
 cd ..
 
 cd DinguxCommander
+for header in src/*.h; do
+	if grep -q 'std::uint[0-9][0-9]*_t' "$header" && ! grep -q '^#include <cstdint>$' "$header"; then
+		sed -i '/^#define .*_H_$/a #include <cstdint>' "$header"
+	fi
+done
 sed -i \
 	-e 's|^CXXFLAGS += $(shell $(SDL_CONFIG) --cflags)$|SDL_PREFIX ?= $(SYSROOT)/usr/local\nSDL_CFLAGS ?= -I$(SDL_PREFIX)/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT\nSDL_LIBS ?= -L$(SDL_PREFIX)/lib -lSDL -lpthread\n\nCXXFLAGS += $(SDL_CFLAGS)|' \
 	-e 's|^LINKFLAGS += $(shell $(SDL_CONFIG) --libs) -lSDL_image -lSDL_ttf$|LINKFLAGS += $(SDL_LIBS) -lSDL_image -lSDL_ttf|' \
