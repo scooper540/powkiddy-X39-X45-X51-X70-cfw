@@ -6,71 +6,53 @@ export NUM_THREAD="$(nproc)"
 cd "$(pwd)/project"
 source set_env.sh
 
+export TARGET_CORE_FLAGS="${TARGET_OPT_FLAGS} ${TARGET_ARCH_FLAGS}"
+export TARGET_CORE_LDFLAGS="-Wl,--as-needed -Wl,--gc-sections ${TARGET_ARCH_FLAGS} --sysroot=${SYSROOT} -L${SYSROOT}/usr/local/lib -L${SYSROOT}/usr/lib -L${SYSROOT}/lib"
+export CFLAGS="${TARGET_CORE_FLAGS} -fno-plt"
+export CXXFLAGS="${TARGET_CORE_FLAGS} -fno-plt"
+export CPPFLAGS="${TARGET_CORE_FLAGS}"
+export LDFLAGS="${TARGET_CORE_LDFLAGS}"
+
+build_core() {
+	core_name="$1"
+	./libretro-fetch.sh "$core_name"
+	platform=classic_armv7_a7 ./libretro-build.sh "$core_name"
+}
+
 git clone https://github.com/libretro/libretro-super.git
 cd libretro-super
-./libretro-fetch.sh 2048
-platform=classic_armv7_a7 ./libretro-build.sh 2048
-./libretro-fetch.sh mrboom
-platform=classic_armv7_a7 ./libretro-build.sh mrboom
-./libretro-fetch.sh prboom
-platform=classic_armv7_a7 ./libretro-build.sh prboom
-./libretro-fetch.sh gambatte
-platform=classic_armv7_a7 ./libretro-build.sh gambatte
-./libretro-fetch.sh gearboy
-platform=classic_armv7_a7 ./libretro-build.sh gearboy
-./libretro-fetch.sh gpsp
-platform=classic_armv7_a7 ./libretro-build.sh gpsp
-./libretro-fetch.sh mgba
-platform=classic_armv7_a7 ./libretro-build.sh mgba
-./libretro-fetch.sh tgbdual
-platform=classic_armv7_a7 ./libretro-build.sh tgbdual
-./libretro-fetch.sh vbam
-platform=classic_armv7_a7 ./libretro-build.sh vbam
-./libretro-fetch.sh fceumm
-platform=classic_armv7_a7 ./libretro-build.sh fceumm
-./libretro-fetch.sh nestopia
-platform=classic_armv7_a7 ./libretro-build.sh nestopia
-./libretro-fetch.sh quicknes
-platform=classic_armv7_a7 ./libretro-build.sh quicknes
-./libretro-fetch.sh snes9x2002
-platform=classic_armv7_a7 ./libretro-build.sh snes9x2002
-./libretro-fetch.sh snes9x2005
-platform=classic_armv7_a7 ./libretro-build.sh snes9x2005
-./libretro-fetch.sh snes9x2010
-platform=classic_armv7_a7 ./libretro-build.sh snes9x2010
-./libretro-fetch.sh snes9x
-platform=classic_armv7_a7 ./libretro-build.sh snes9x
-./libretro-fetch.sh mednafen_supafaust
-platform=classic_armv7_a7 ./libretro-build.sh mednafen_supafaust
-./libretro-fetch.sh genesis_plus_gx
-platform=classic_armv7_a7 ./libretro-build.sh genesis_plus_gx
-./libretro-fetch.sh picodrive
-platform=classic_armv7_a7 ./libretro-build.sh picodrive
-./libretro-fetch.sh pcsx_rearmed
-platform=classic_armv7_a7 ./libretro-build.sh pcsx_rearmed
-./libretro-fetch.sh fbneo
-platform=classic_armv7_a7 ./libretro-build.sh fbneo
-./libretro-fetch.sh mame2000
-platform=classic_armv7_a7 ./libretro-build.sh mame2000
-./libretro-fetch.sh mame2003
-platform=classic_armv7_a7 ./libretro-build.sh mame2003
-./libretro-fetch.sh mame2003_plus
-platform=classic_armv7_a7 ./libretro-build.sh mame2003_plus
-./libretro-fetch.sh fbalpha2012
-platform=classic_armv7_a7 ./libretro-build.sh fbalpha2012
-./libretro-fetch.sh mednafen_ngp
-platform=classic_armv7_a7 ./libretro-build.sh mednafen_ngp
-./libretro-fetch.sh mednafen_vb
-platform=classic_armv7_a7 ./libretro-build.sh mednafen_vb
-
-./libretro-fetch.sh freeintv
-platform=classic_armv7_a7 ./libretro-build.sh freeintv
-
-./libretro-fetch.sh mednafen_lynx
-platform=classic_armv7_a7 ./libretro-build.sh mednafen_lynx
+build_core 2048
+build_core mrboom
+build_core prboom
+build_core gambatte
+build_core gearboy
+build_core gpsp
+build_core mgba
+build_core tgbdual
+build_core vbam
+build_core fceumm
+build_core nestopia
+build_core quicknes
+build_core snes9x2002
+build_core snes9x2005
+build_core snes9x2010
+build_core snes9x
+build_core mednafen_supafaust
+build_core genesis_plus_gx
+build_core picodrive
+build_core pcsx_rearmed
+build_core fbneo
+build_core mame2000
+build_core mame2003
+build_core mame2003_plus
+build_core fbalpha2012
+build_core mednafen_ngp
+build_core mednafen_vb
+build_core freeintv
+build_core mednafen_lynx
 
 ./libretro-fetch.sh retro8
-CFLAGS+=" -DUSE_RGB565" platform=classic_armv7_a7 ./libretro-build.sh retro8
+CFLAGS="${TARGET_CORE_FLAGS} -fno-plt -DUSE_RGB565" platform=classic_armv7_a7 ./libretro-build.sh retro8
 
 ./libretro-fetch.sh vice_xvic
 platform=classic_armv7_a7 ./libretro-build.sh vice_xvic -j"$NUM_THREAD"
@@ -102,5 +84,5 @@ cp -rf dist/unix/* "$(pwd)/../../output-sd/cfw/retroarch/cores/"
 cd ..
 git clone https://github.com/schellingb/dosbox-pure.git
 cd dosbox-pure
-platform=classic_armv7_a7 make -j"$NUM_THREAD"
+CFLAGS="${TARGET_CORE_FLAGS} -fno-plt" CXXFLAGS="${TARGET_CORE_FLAGS} -fno-plt" LDFLAGS="${TARGET_CORE_LDFLAGS}" platform=classic_armv7_a7 make -j"$NUM_THREAD"
 cp  dosbox_pure_libretro.so $(pwd)/../../output-sd/cfw/retroarch/cores/

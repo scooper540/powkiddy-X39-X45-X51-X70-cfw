@@ -6,10 +6,19 @@ export NUM_THREAD="$(nproc)"
 cd "$(pwd)/project"
 source set_env.sh
 
+TARGET_CPU="${TARGET_CPU:-cortex-a9}"
+TARGET_FPU="${TARGET_FPU:-neon}"
+TARGET_FLOAT_ABI="${TARGET_FLOAT_ABI:-hard}"
+TARGET_ARCH_FLAGS="-mcpu=${TARGET_CPU} -mfpu=${TARGET_FPU} -mfloat-abi=${TARGET_FLOAT_ABI} -marm"
+TARGET_OPT_FLAGS="-O2 -pipe -ffast-math -funsafe-math-optimizations -fomit-frame-pointer"
+
 rm -rf zlib-1.2.8
 tar xvf zlib-1.2.8.tar.xz
 cd zlib-1.2.8
-./configure
+CHOST=arm-linux-gnueabihf \
+CFLAGS="${TARGET_OPT_FLAGS} ${TARGET_ARCH_FLAGS} --sysroot=${SYSROOT} -I${SYSROOT}/usr/include" \
+LDFLAGS="${TARGET_ARCH_FLAGS} --sysroot=${SYSROOT} -L${SYSROOT} -L${SYSROOT}/lib -L${SYSROOT}/usr/lib -L${SYSROOT}/usr/local/lib" \
+./configure --prefix=/usr
 make -j$NUM_THREAD
 make install DESTDIR=$SYSROOT
 cd ..
@@ -25,7 +34,7 @@ cd ..
 rm -rf jpeg-9c
 tar xvzf jpeg-9c.tar.gz
 cd jpeg-9c
-./configure --host=arm-linux-gnueabihf --build=$(gcc -dumpmachine)
+./configure --host=arm-linux-gnueabihf --build=$(gcc -dumpmachine) --prefix=/usr
 make -j$NUM_THREAD
 make install DESTDIR=$SYSROOT
 cd ..
@@ -50,7 +59,13 @@ cd ..
 rm -rf alsa-lib-1.2.9
 tar xvjf alsa-lib-1.2.9.tar.bz2
 cd alsa-lib-1.2.9
-./configure --host=arm-linux-gnueabihf --enable-shared --disable-python
+./configure \
+	--host=arm-linux-gnueabihf \
+	--build=$(gcc -dumpmachine) \
+	--prefix=/usr \
+	--libdir=/usr/lib \
+	--enable-shared \
+	--disable-python
 make -j$NUM_THREAD
 make install DESTDIR=$SYSROOT
 cd ..
@@ -120,7 +135,7 @@ git submodule init
 git submodule update
 PATH=/usr/bin:/bin ./bootstrap.sh
 cat > project-config.jam <<EOF
-using gcc : arm : ${SYSROOT}/bin/arm-linux-gnueabihf-g++ ;
+using gcc : arm : arm-linux-gnueabihf-g++ ;
 EOF
 ./b2 -j"$NUM_THREAD" \
     toolset=gcc-arm \
@@ -133,8 +148,8 @@ EOF
     --with-filesystem \
     --with-date_time \
     --with-locale \
-    cxxflags="-std=c++11 -march=armv7-a -mfpu=neon -mfloat-abi=hard --sysroot=${SYSROOT}" \
-    linkflags="--sysroot=${SYSROOT}" \
+    cxxflags="-std=c++11 -O2 -pipe -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=hard -marm --sysroot=${SYSROOT}" \
+    linkflags="-mcpu=cortex-a9 -mfpu=neon -mfloat-abi=hard -marm --sysroot=${SYSROOT}" \
     variant=release
 rsync -aL boost/ "${SYSROOT}/usr/include/boost/"
 

@@ -1,6 +1,6 @@
 #!/bin/sh
-STRIP_BIN="$(pwd)/sysroot/bin/arm-linux-gnueabihf-strip"
-READELF_BIN="$(pwd)/sysroot/bin/arm-linux-gnueabihf-readelf"
+STRIP_BIN="${STRIP_BIN:-arm-linux-gnueabihf-strip}"
+READELF_BIN="${READELF_BIN:-arm-linux-gnueabihf-readelf}"
 
 strip_arm_elf_files() {
 	dir="$1"

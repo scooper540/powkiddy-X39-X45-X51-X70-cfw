@@ -1,10 +1,32 @@
-#/bin/sh
+#!/bin/sh
 
 SYSROOT="$(pwd)/sysroot"
 OUT="$(pwd)/output/"
-TOOLCHAIN="$(pwd)/sysroot"
-STRIP_BIN="${TOOLCHAIN}/bin/arm-linux-gnueabihf-strip"
-READELF_BIN="${TOOLCHAIN}/bin/arm-linux-gnueabihf-readelf"
+TARGET_TRIPLET="${TARGET_TRIPLET:-arm-linux-gnueabihf}"
+STRIP_BIN="${STRIP_BIN:-arm-linux-gnueabihf-strip}"
+READELF_BIN="${READELF_BIN:-arm-linux-gnueabihf-readelf}"
+
+copy_tree_if_present() {
+	src="$1"
+	dst="$2"
+
+	if [ -d "$src" ]; then
+		mkdir -p "$dst"
+		cp -a "$src"/. "$dst"/
+	fi
+}
+
+copy_usr_share_except_alsa() {
+	src="$1"
+	dst="$2"
+
+	if [ -d "$src" ]; then
+		mkdir -p "$dst"
+		find "$src" -mindepth 1 -maxdepth 1 ! -name alsa | while IFS= read -r path; do
+			cp -a "$path" "$dst"/
+		done
+	fi
+}
 
 strip_arm_elf_files() {
 	dir="$1"
@@ -24,11 +46,12 @@ mkdir -p $OUT/tmp
 mkdir -p $OUT/dev
 mkdir -p $OUT/sys
 
-cp -a $SYSROOT/lib/* $OUT/lib
-
-cp -a $SYSROOT/usr/local/bin/* $OUT/usr/bin/
-cp -a $SYSROOT/usr/local/lib/* $OUT/usr/lib/
-cp -a $SYSROOT/usr/lib/* $OUT/usr/lib/
+copy_tree_if_present "$SYSROOT/lib" "$OUT/lib"
+copy_tree_if_present "$SYSROOT/usr/$TARGET_TRIPLET/lib" "$OUT/lib"
+copy_tree_if_present "$SYSROOT/usr/local/bin" "$OUT/usr/bin"
+copy_tree_if_present "$SYSROOT/usr/local/lib" "$OUT/usr/lib"
+copy_tree_if_present "$SYSROOT/usr/lib" "$OUT/usr/lib"
+copy_usr_share_except_alsa "$SYSROOT/usr/share" "$OUT/usr/share"
 echo "=== all files copied ==="
 rm -rf output/lib/debug
 rm -rf output/lib/gcc

@@ -6,6 +6,12 @@ export NUM_THREAD=$(nproc)
 cd "$(pwd)/project"
 source set_env.sh
 
+mkdir -p \
+	"$(pwd)/../output/usr/bin" \
+	"$(pwd)/../output-sd/cfw/apps/DinguxCommander" \
+	"$(pwd)/../output-sd/cfw/apps/st" \
+	"$(pwd)/../output-sd/cfw/retroarch/filters/video"
+
 cd RetroArch
 make -j$NUM_THREAD -f Makefile.powkiddy
 cp retroarch "$(pwd)/../../output/usr/bin"
@@ -13,6 +19,11 @@ cp gfx/video_filters/*.filt "$(pwd)/../../output-sd/cfw/retroarch/filters/video/
 cd ..
 
 cd DinguxCommander
+sed -i \
+	-e 's|^CXXFLAGS += $(shell $(SDL_CONFIG) --cflags)$|SDL_PREFIX ?= $(SYSROOT)/usr/local\nSDL_CFLAGS ?= -I$(SDL_PREFIX)/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT\nSDL_LIBS ?= -L$(SDL_PREFIX)/lib -lSDL -lpthread\n\nCXXFLAGS += $(SDL_CFLAGS)|' \
+	-e 's|^LINKFLAGS += $(shell $(SDL_CONFIG) --libs) -lSDL_image -lSDL_ttf$|LINKFLAGS += $(SDL_LIBS) -lSDL_image -lSDL_ttf|' \
+	-e 's|^\t$(CMD)$(CXX) $(LINKFLAGS) -o $@ $^$|\t$(CMD)$(CXX) -o $@ $^ $(LINKFLAGS)|' \
+	Makefile
 make -j$NUM_THREAD
 cp output/DinguxCommander "$(pwd)/../../output-sd/cfw/apps/DinguxCommander"
 cp -rf res "$(pwd)/../../output-sd/cfw/apps/DinguxCommander"
@@ -25,7 +36,10 @@ cp output/simplermenu_plus "$(pwd)/../../output/usr/bin"
 cd ..
 
 cd st-sdl
-make
+make \
+	CC="$CC" \
+	CFLAGS="$CFLAGS -I. -I$SYSROOT/usr/local/include/SDL -I$SYSROOT/usr/local/include -D_GNU_SOURCE=1 -D_REENTRANT -DVERSION=\\\"0.3\\\" -DPOWKIDDY -std=gnu11 -fPIC -ffunction-sections -fdata-sections -Wall" \
+	LDFLAGS="-lc -L$SYSROOT/usr/local/lib -L$SYSROOT/usr/lib -lSDL -lpthread -lutil -lasound"
 cp st "$(pwd)/../../output-sd/cfw/apps/st"
 cd ..
 
@@ -55,7 +69,9 @@ rm -rf tinyalsa
 git clone -b v1.0.0 --depth 1 https://github.com/tinyalsa/tinyalsa.git
 cd tinyalsa
 make CROSS_COMPILE=$ARMABI-
-make install DESTDIR="$(pwd)/../../output/"
+rm -f "$(pwd)/../../output/usr/bin/tinyplay" "$(pwd)/../../output/usr/bin/tinycap" "$(pwd)/../../output/usr/bin/tinymix" "$(pwd)/../../output/usr/bin/tinypcminfo"
+rm -f "$(pwd)/../../output/usr/lib/libtinyalsa.so" "$(pwd)/../../output/usr/lib/libtinyalsa.a"
+make install DESTDIR="$(pwd)/../../output/" PREFIX=/usr DEB_HOST_MULTIARCH=
 cd ..
 
 rm -rf busybox
