@@ -25,7 +25,7 @@ for header in src/*.h; do
 	fi
 done
 sed -i \
-	-e 's|^CXXFLAGS += $(shell $(SDL_CONFIG) --cflags)$|SDL_PREFIX ?= $(SYSROOT)/usr/local\nSDL_CFLAGS ?= -I$(SDL_PREFIX)/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT\nSDL_LIBS ?= -L$(SDL_PREFIX)/lib -lSDL -lpthread\n\nCXXFLAGS += $(SDL_CFLAGS)|' \
+	-e 's|^CXXFLAGS += $(shell $(SDL_CONFIG) --cflags)$|SDL_PREFIX ?= $(SYSROOT)/usr/local\nSDL_CFLAGS ?= -I$(SDL_PREFIX)/include -I$(SDL_PREFIX)/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT\nSDL_LIBS ?= -L$(SDL_PREFIX)/lib -lSDL -lpthread\n\nCXXFLAGS += $(SDL_CFLAGS)|' \
 	-e 's|^LINKFLAGS += $(shell $(SDL_CONFIG) --libs) -lSDL_image -lSDL_ttf$|LINKFLAGS += $(SDL_LIBS) -lSDL_image -lSDL_ttf|' \
 	-e 's|^\t$(CMD)$(CXX) $(LINKFLAGS) -o $@ $^$|\t$(CMD)$(CXX) -o $@ $^ $(LINKFLAGS)|' \
 	Makefile
@@ -88,19 +88,19 @@ rm -rf busybox
 git clone -b 1_36_1 --depth 1 https://github.com/mirror/busybox.git
 cd busybox
 make ARCH=arm CROSS-COMPILE=$ARMABI- defconfig
+sed -i 's/^CONFIG_TC=y$/# CONFIG_TC is not set/' .config
 echo "CONFIG_STATIC=y" >> .config
 make ARCH=arm CROSS-COMPILE=$ARMABI- -j$NUM_THREAD
 make ARCH=arm CROSS-COMPILE=$ARMABI- CONFIG_PREFIX=$SYSROOT/../output install
 cd ..
 
-
 rm -rf strace
-git clone -b v4.26 --depth 1 https://github.com/strace/strace.git
+git clone -b v6.10 --depth 1 https://github.com/strace/strace.git
 cd strace
 ./bootstrap
-./configure --host=arm-linux-gnueabihf --build=$(gcc -dumpmachine) 
+./configure --host=arm-linux-gnueabihf --build=$(gcc -dumpmachine)
 make -j$NUM_THREAD
-cp strace "$(pwd)/../../output/usr/bin"
+cp src/strace "$(pwd)/../../output/usr/bin"
 cd ..
 
 

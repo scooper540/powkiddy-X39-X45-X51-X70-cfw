@@ -62,6 +62,7 @@ sudo apt-get -y install \
 	cpio \
 	flex \
 	bison \
+	doxygen \
 	g++-arm-linux-gnueabihf \
 	gcc-arm-linux-gnueabihf \
 	git \
