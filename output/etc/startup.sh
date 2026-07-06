@@ -9,12 +9,9 @@ watchdog_feeder 5 30 &
 rmmod owl_gpio_matrix_adcjoystick 2>/dev/null
 insmod /mnt/original/lib/modules/3.10.0/owl_gpio_matrix_adcjoystick.ko tiny_mode=0
 
-#activate cpu1 and set to performance the cpu, maybe only cpu0 is needed
-echo 1 >  /sys/devices/system/cpu/cpu1/online
+#only cpu0 is needed
 echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-echo performance > /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor
 echo 900000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-echo 900000 > /sys/devices/system/cpu/cpu1/cpufreq/scaling_max_freq
 
 /etc/backlight.sh open &
 #tinymix 35 1 &

@@ -13,6 +13,7 @@ cd zlib-1.2.8
 make -j$NUM_THREAD
 make install DESTDIR=$SYSROOT
 cd ..
+ln -sf libz.a $SYSROOT/usr/local/lib/libzlib.a
 
 rm -rf lpng1655
 unzip lpng1655.zip
@@ -180,4 +181,45 @@ cd libmad-0.15.1b
 CFLAGS="${CFLAGS} -marm" ./configure --host=arm-linux-gnueabihf --build=$(gcc -dumpmachine)
 make -j$NUM_THREAD CFLAGS="${CFLAGS} -marm"
 make install DESTDIR=$SYSROOT
+cd ..
+
+rm -rf ffmpeg-4.4.4
+if [ ! -f "ffmpeg-4.4.4.tar.bz2" ]; then
+    echo "Downloading FFmpeg 4.4.4..."
+    wget https://ffmpeg.org/releases/ffmpeg-4.4.4.tar.bz2
+fi
+
+echo "Extracting FFmpeg..."
+tar xjf ffmpeg-4.4.4.tar.bz2
+cd ffmpeg-4.4.4
+
+echo "Configuring FFmpeg (Fully Static)..."
+make clean || true
+make distclean || true
+
+./configure \
+  --prefix=/usr/local \
+  --enable-cross-compile \
+  --cross-prefix="${ARMABI}-" \
+  --target-os=linux \
+  --arch=arm \
+  --cpu=cortex-a9 \
+  --sysroot="${SYSROOT}" \
+  --extra-cflags="-mcpu=cortex-a9 -mfpu=neon -mfloat-abi=hard" \
+  --extra-ldflags="--sysroot=${SYSROOT}" \
+  --disable-shared \
+  --enable-static \
+  --enable-filters \
+  --enable-alsa \
+  --disable-vdpau \
+  --disable-vaapi \
+  --enable-gpl \
+  --enable-nonfree
+
+echo "Building FFmpeg..."
+make -j$NUM_THREAD
+
+echo "Installing FFmpeg to Sysroot..."
+make install DESTDIR="$SYSROOT"
+
 cd ..
